@@ -1,10 +1,14 @@
 class Post {
   final String id;
   final String userId;
-  final String text;       // Tradução engraçada
-  final String image;      // Foto do pet
-  final String? audioUrl;  // Caminho do áudio gravado
+  final String text; // tradução engraçada
+  final String
+  image; // pode ser asset ("assets/dog1.jpg") ou arquivo local ("/data/...")
+  final String? audioUrl; // caminho do áudio gravado
   final DateTime date;
+
+  bool isLiked;
+  int likes;
 
   Post({
     required this.id,
@@ -13,5 +17,7 @@ class Post {
     required this.image,
     this.audioUrl,
     required this.date,
+    this.isLiked = false,
+    this.likes = 0,
   });
 }
