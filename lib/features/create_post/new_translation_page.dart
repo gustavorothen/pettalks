@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
@@ -27,11 +28,36 @@ class _NewTranslationPageState extends State<NewTranslationPage> {
     _loadPet();
   }
 
+  // Future<void> _loadPet() async {
+  //   final pet = await DatabaseHelper.getPetById(widget.currentUser.pet_id);
+  //   setState(() {
+  //     petData = pet;
+  //   });
+  // }
   Future<void> _loadPet() async {
-    final pet = await DatabaseHelper.getPetById(widget.currentUser.pet_id);
-    setState(() {
-      petData = pet;
-    });
+    try {
+      final petDoc = await FirebaseFirestore.instance
+          .collection('pet')
+          .doc(
+            widget.currentUser.pet_id,
+          ) // aqui o pet_id deve ser o ID do documento no Firestore
+          .get();
+
+      if (petDoc.exists) {
+        setState(() {
+          petData = petDoc.data(); // retorna Map<String, dynamic>
+        });
+      } else {
+        setState(() {
+          petData = null;
+        });
+      }
+    } catch (e) {
+      print('Erro ao carregar pet: $e');
+      setState(() {
+        petData = null;
+      });
+    }
   }
 
   // lista de frases
@@ -94,11 +120,20 @@ class _NewTranslationPageState extends State<NewTranslationPage> {
       'isLiked': 0,
       'likes': 0,
       'audio_url': recordedPath,
-      'pet_id': 1, // exemplo: vincular ao pet 1 (ajuste conforme seu app)
+      'pet_id': widget
+          .currentUser
+          .pet_id, // exemplo: vincular ao pet 1 (ajuste conforme seu app)
     };
 
     // salva no banco
-    await DatabaseHelper.insertPost(newPost);
+    await FirebaseFirestore.instance.collection('post').add({
+      'text': textCtrl.text,
+      'date': DateTime.now().toIso8601String(),
+      'isLiked': false,
+      'likes': 0,
+      'audio_url': recordedPath,
+      'pet_id': widget.currentUser.pet_id, // id do documento do pet
+    });
 
     // volta para a tela anterior avisando que deu certo
     Navigator.pop(context, newPost);
@@ -126,7 +161,7 @@ class _NewTranslationPageState extends State<NewTranslationPage> {
                   radius: 45,
                   backgroundImage: petData != null
                       ? AssetImage(petData!['photo'])
-                      : const AssetImage('assets/default_pet.png'),
+                      : const AssetImage('assets/dog1.jpg'),
                 ),
                 const SizedBox(width: 12),
                 Column(

@@ -1,4 +1,5 @@
 import '../../data/database/database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../data/mock/mock_posts.dart';
 import '../../data/models/post.dart';
@@ -38,20 +39,52 @@ class _FeedPageState extends State<FeedPage> {
   }
 
   Future<List<Post>> _loadPosts() async {
-    final rows = await DatabaseHelper.listarPosts();
-    return rows.map((row) {
-      return Post(
-        id: row['id'].toString(),
-        userId: widget.currentUser.id,
-        text: row['text'],
-        pet_name: row['pet_name'],
-        image: row['pet_photo'],
-        audioUrl: row['audio_url'],
-        date: DateTime.parse(row['date']),
-        isLiked: (row['isLiked'] ?? 0) == 1,
-        likes: row['likes'] ?? 0,
+    final snapshot = await FirebaseFirestore.instance
+        .collection('post')
+        .orderBy('date', descending: true)
+        .get();
+
+    List<Post> posts = [];
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+
+      // busca o pet relacionado
+      final petId = data['pet_id'];
+      String petName = '';
+      String petPhoto = '';
+
+      if (petId != null) {
+        final petDoc = await FirebaseFirestore.instance
+            .collection('pet')
+            .doc(petId.toString())
+            .get();
+        if (petDoc.exists) {
+          petName = petDoc['name'] ?? '';
+          petPhoto = petDoc['photo'] ?? '';
+        }
+      }
+
+      posts.add(
+        Post(
+          id: doc.id,
+          userId: widget.currentUser.id,
+          text: data['text'] ?? '',
+          pet_name: petName,
+          image: petPhoto,
+          audioUrl: data['audio_url'],
+          date: DateTime.tryParse(data['date'] ?? '') ?? DateTime.now(),
+          isLiked:
+              (data['likedBy'] as List<dynamic>?)?.contains(
+                widget.currentUser.id,
+              ) ??
+              false,
+          likes: data['likesCount'] ?? 0,
+        ),
       );
-    }).toList();
+    }
+
+    return posts;
   }
 
   // Future<void> goToNewTranslation() async {
@@ -77,12 +110,36 @@ class _FeedPageState extends State<FeedPage> {
     }
   }
 
+  // void _toggleLikeFor(Post post) async {
+  //   setState(() {
+  //     post.isLiked = !post.isLiked;
+  //     post.likes += post.isLiked ? 1 : -1;
+  //   });
+
+  //   await FirebaseFirestore.instance.collection('post').doc(post.id).update({
+  //     'isLiked': post.isLiked,
+  //     'likes': post.likes,
+  //   });
+  // }
   void _toggleLikeFor(Post post) async {
+    final postRef = FirebaseFirestore.instance.collection('post').doc(post.id);
+
     setState(() {
       post.isLiked = !post.isLiked;
       post.likes += post.isLiked ? 1 : -1;
     });
-    // aqui você poderia atualizar no banco também
+
+    if (post.isLiked) {
+      await postRef.update({
+        'likedBy': FieldValue.arrayUnion([widget.currentUser.id]),
+        'likesCount': post.likes,
+      });
+    } else {
+      await postRef.update({
+        'likedBy': FieldValue.arrayRemove([widget.currentUser.id]),
+        'likesCount': post.likes,
+      });
+    }
   }
 
   @override
@@ -90,6 +147,27 @@ class _FeedPageState extends State<FeedPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Feed'),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.menu),
+            onSelected: (value) {
+              if (value == 'logout') {
+                // Navega para tela de seleção de usuário
+                Navigator.pushReplacementNamed(context, '/selectUser');
+              } else if (value == 'newUser') {
+                // Navega para tela de login
+                Navigator.pushReplacementNamed(context, '/login');
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'logout', child: Text('Sair')),
+              const PopupMenuItem(
+                value: 'newUser',
+                child: Text('Novo Usuário'),
+              ),
+            ],
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(70),
           child: Padding(
@@ -138,20 +216,6 @@ class _FeedPageState extends State<FeedPage> {
               );
             },
           );
-          // return ListView.builder(
-          //   itemCount: filtradas.length,
-          //   itemBuilder: (context, index) {
-          //     final item = filtradas[index];
-          //     return Card(
-          //       margin: const EdgeInsets.all(10),
-          //       child: ListTile(
-          //         leading: const Icon(Icons.pets, color: Colors.orange),
-          //         title: Text('${item['animal_nome']}: ${item['frase']}'),
-          //         subtitle: Text(item['data']),
-          //       ),
-          //     );
-          //   },
-          // );
         },
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -168,4 +232,88 @@ class _FeedPageState extends State<FeedPage> {
       ),
     );
   }
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     appBar: AppBar(
+  //       title: const Text('Feed'),
+  //       bottom: PreferredSize(
+  //         preferredSize: const Size.fromHeight(70),
+  //         child: Padding(
+  //           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  //           child: TextField(
+  //             decoration: InputDecoration(
+  //               hintText: 'Pesquisar pets ou frases...',
+  //               prefixIcon: const Icon(Icons.search),
+  //               filled: true,
+  //               fillColor: Colors.white,
+  //               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+  //               border: OutlineInputBorder(
+  //                 borderRadius: BorderRadius.circular(30),
+  //                 borderSide: BorderSide.none,
+  //               ),
+  //             ),
+  //             onChanged: (value) {
+  //               setState(() {
+  //                 filtro = value.toLowerCase();
+  //               });
+  //             },
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //     body: FutureBuilder(
+  //       future: futurePosts,
+  //       builder: (context, snapshot) {
+  //         if (!snapshot.hasData) {
+  //           return const Center(child: CircularProgressIndicator());
+  //         }
+  //         final traducoes = snapshot.data!;
+  //         final filtradas = traducoes.where((item) {
+  //           final texto = '${item.pet_name} ${item.text}'.toLowerCase();
+  //           return texto.contains(filtro);
+  //         }).toList();
+  //         return ListView.builder(
+  //           itemCount: filtradas.length,
+  //           itemBuilder: (_, i) {
+  //             final post = filtradas[i];
+  //             return PostCard(
+  //               key: ValueKey(post.id),
+  //               post: post,
+  //               currentUser: widget.currentUser,
+  //               onToggleLike: () => _toggleLikeFor(post),
+  //             );
+  //           },
+  //         );
+  //         // return ListView.builder(
+  //         //   itemCount: filtradas.length,
+  //         //   itemBuilder: (context, index) {
+  //         //     final item = filtradas[index];
+  //         //     return Card(
+  //         //       margin: const EdgeInsets.all(10),
+  //         //       child: ListTile(
+  //         //         leading: const Icon(Icons.pets, color: Colors.orange),
+  //         //         title: Text('${item['animal_nome']}: ${item['frase']}'),
+  //         //         subtitle: Text(item['data']),
+  //         //       ),
+  //         //     );
+  //         //   },
+  //         // );
+  //       },
+  //     ),
+  //     bottomNavigationBar: BottomNavigationBar(
+  //       currentIndex: _selectedIndex,
+  //       onTap: _onItemTapped,
+  //       selectedItemColor: Colors.orange,
+  //       items: const [
+  //         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Feed'),
+  //         BottomNavigationBarItem(
+  //           icon: Icon(Icons.mic),
+  //           label: 'Nova Tradução',
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }

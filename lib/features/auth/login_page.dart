@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../data/models/pet.dart';
 import '../../data/models/user.dart';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -28,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void continueToApp() {
+  void continueToApp() async {
     if (ownerController.text.isEmpty ||
         petController.text.isEmpty ||
         speciesController.text.isEmpty ||
@@ -39,15 +40,42 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    final user = User(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: ownerController.text,
-      pet_id: 1,      
-      followers: 0,
-      following: 0,
-    );
+    try {
+      final db = FirebaseFirestore.instance;
 
-    Navigator.pushReplacementNamed(context, '/feed', arguments: user);
+      // 1. Cria o pet
+      final petDoc = await db.collection('pet').add({
+        'name': petController.text,
+        'species': speciesController.text,
+        'photo': petImage!
+            .path, // aqui você pode salvar o path local ou usar Storage
+      });
+
+      // 2. Cria o usuário vinculado ao pet
+      final userDoc = await db.collection('user').add({
+        'name': ownerController.text,
+        'pet_id': petDoc.id,
+        'followers': 0,
+        'following': 0,
+      });
+
+      // 3. Cria objeto User para passar ao Feed
+      final user = User(
+        id: userDoc.id,
+        name: ownerController.text,
+        pet_id: petDoc.id,
+        followers: 0,
+        following: 0,
+      );
+
+      Navigator.pushReplacementNamed(context, '/feed', arguments: user);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro ao salvar no banco: $e')));
+    }
+
+    //Navigator.pushReplacementNamed(context, '/feed', arguments: user);
   }
 
   @override

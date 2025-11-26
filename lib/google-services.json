@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "354428054862",
+    "project_id": "pettalks",
+    "storage_bucket": "pettalks.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:354428054862:android:34492403bc1c37cb0c421f",
+        "android_client_info": {
+          "package_name": "com.example.pettalks"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCulTUdRt2jDqlNSHTiyk8Qg94PbqSbClo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

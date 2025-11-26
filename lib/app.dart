@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'features/auth/login_page.dart';
+import 'features/auth/selectuser_page.dart';
 import 'features/feed/feed_page.dart';
 import 'features/create_post/new_translation_page.dart';
 import 'features/explore/explore_page.dart';
@@ -8,19 +10,11 @@ import 'features/profile/profile_page.dart';
 import 'data/models/user.dart';
 
 class PetTalksApp extends StatelessWidget {
-  const PetTalksApp({super.key});
+  final User defaultUser;
+  const PetTalksApp({super.key, required this.defaultUser});
 
   @override
   Widget build(BuildContext context) {
-    // Usuário padrão para testes
-    final defaultUser = User(
-      id: '1',
-      name: 'Usuario Padrão',
-      pet_id: 1,
-      followers: 10,
-      following: 14,
-    );
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'PetTalks',
@@ -28,8 +22,9 @@ class PetTalksApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
       ),
-      initialRoute: '/feed',
+      initialRoute: '/selectUser',
       routes: {
+        '/selectUser': (_) => const UserSelectionPage(),
         '/login': (_) => const LoginPage(),
         '/feed': (context) {
           final args = ModalRoute.of(context)!.settings.arguments;
@@ -44,18 +39,6 @@ class PetTalksApp extends StatelessWidget {
         '/explore': (_) => const ExplorePage(),
         '/messages': (_) => const ChatListPage(),
         '/profile': (_) => const ProfilePage(),
-      },
-      // aqui você injeta o argumento inicial
-      onGenerateInitialRoutes: (initialRoute) {
-        if (initialRoute == '/feed') {
-          return [
-            MaterialPageRoute(
-              builder: (context) => FeedPage(currentUser: defaultUser),
-              settings: const RouteSettings(name: '/feed'),
-            ),
-          ];
-        }
-        return [];
       },
     );
   }
