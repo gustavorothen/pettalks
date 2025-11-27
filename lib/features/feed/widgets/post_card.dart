@@ -6,6 +6,7 @@ import '../../../data/mock/mock_users.dart';
 import '../../../data/models/user.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -79,7 +80,8 @@ class PostCard extends StatelessWidget {
         orElse: () => mockUsers.first,
       );
     }
-
+    final formatador = DateFormat('dd/MM/yyyy HH:mm');
+    final dataFormatada = formatador.format(post.date);
     // ✅ Decide se a imagem é asset ou Base64
     final bool isAsset = post.image.startsWith('assets/');
     final Widget imageWidget = isAsset
@@ -119,16 +121,40 @@ class PostCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  post.pet_name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      post.pet_name,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      DateFormat('dd/MM/yyyy HH:mm').format(post.date),
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
                 ),
-
+                // Text(
+                //   post.pet_name,
+                //   style: const TextStyle(
+                //     fontSize: 16,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
+                // Text(
+                //   DateFormat('dd/MM/yyyy HH:mm').format(post.date),
+                //   style: TextStyle(fontSize: 14, color: Colors.grey),
+                // ),
                 const SizedBox(height: 4),
                 Text(post.text, style: const TextStyle(fontSize: 14)),
+                // SizedBox(height: 4),
+                // Text(
+                //   DateFormat('dd/MM/yyyy HH:mm').format(post.date),
+                //   style: TextStyle(fontSize: 14, color: Colors.grey),
+                // ),
                 const SizedBox(height: 8),
 
                 // ✅ Ícones sem overflow
