@@ -39,52 +39,94 @@ class _FeedPageState extends State<FeedPage> {
   }
 
   Future<List<Post>> _loadPosts() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('post')
-        .orderBy('date', descending: true)
-        .get();
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('post')
+          .orderBy('date', descending: true)
+          .get();
 
-    List<Post> posts = [];
+      List<Post> posts = [];
 
-    for (var doc in snapshot.docs) {
-      final data = doc.data();
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
 
-      // busca o pet relacionado
-      final petId = data['pet_id'];
-      String petName = '';
-      String petPhoto = '';
+        // ✅ Garantir que pet_id é string
+        final petId = data['pet_id']?.toString() ?? '';
 
-      if (petId != null) {
-        final petDoc = await FirebaseFirestore.instance
-            .collection('pet')
-            .doc(petId.toString())
-            .get();
-        if (petDoc.exists) {
-          petName = petDoc['name'] ?? '';
-          petPhoto = petDoc['photo'] ?? '';
+        String petName = '';
+        String petPhoto = '';
+        String ownerUserId = '';
+
+        // ✅ Buscar PET com proteção total
+        if (petId.isNotEmpty) {
+          try {
+            final petDoc = await FirebaseFirestore.instance
+                .collection('pet')
+                .doc(petId)
+                .get();
+
+            if (petDoc.exists) {
+              petName = petDoc.data()?['name']?.toString() ?? '';
+              petPhoto = petDoc.data()?['photo']?.toString() ?? '';
+            }
+          } catch (e) {
+            print("Erro ao buscar pet: $e");
+          }
+
+          // ✅ Buscar USER dono do pet com proteção total
+          try {
+            final userQuery = await FirebaseFirestore.instance
+                .collection('user')
+                .where('pet_id', isEqualTo: petId)
+                .limit(1)
+                .get();
+
+            if (userQuery.docs.isNotEmpty) {
+              ownerUserId = userQuery.docs.first.id;
+            }
+          } catch (e) {
+            print("Erro ao buscar usuário do pet: $e");
+          }
         }
+
+        // ✅ Garantir que likedBy é lista
+        final likedBy = (data['likedBy'] is List)
+            ? List<String>.from(data['likedBy'])
+            : <String>[];
+
+        // ✅ Garantir que likesCount é número
+        final likesCount = (data['likesCount'] is int) ? data['likesCount'] : 0;
+
+        // ✅ Garantir que a data é válida
+        DateTime date;
+        try {
+          date = DateTime.parse(data['date']);
+        } catch (_) {
+          date = DateTime.now();
+        }
+
+        // ✅ Criar o Post sem risco de erro
+        posts.add(
+          Post(
+            id: doc.id,
+            userId: ownerUserId,
+            petId: petId,
+            text: data['text']?.toString() ?? '',
+            pet_name: petName,
+            image: petPhoto,
+            audioUrl: data['audio_base64']?.toString(),
+            date: date,
+            isLiked: likedBy.contains(widget.currentUser.id),
+            likes: likesCount,
+          ),
+        );
       }
 
-      posts.add(
-        Post(
-          id: doc.id,
-          userId: widget.currentUser.id,
-          text: data['text'] ?? '',
-          pet_name: petName,
-          image: petPhoto,
-          audioUrl: data['audio_url'],
-          date: DateTime.tryParse(data['date'] ?? '') ?? DateTime.now(),
-          isLiked:
-              (data['likedBy'] as List<dynamic>?)?.contains(
-                widget.currentUser.id,
-              ) ??
-              false,
-          likes: data['likesCount'] ?? 0,
-        ),
-      );
+      return posts;
+    } catch (e) {
+      print("Erro geral ao carregar posts: $e");
+      return []; // ✅ Nunca deixa o FutureBuilder travar
     }
-
-    return posts;
   }
 
   // Future<void> goToNewTranslation() async {
@@ -103,7 +145,7 @@ class _FeedPageState extends State<FeedPage> {
       ),
     );
 
-    if (result != null) {
+    if (result == true) {
       setState(() {
         futurePosts = _loadPosts();
       });
@@ -156,15 +198,27 @@ class _FeedPageState extends State<FeedPage> {
                 Navigator.pushReplacementNamed(context, '/selectUser');
               } else if (value == 'newUser') {
                 // Navega para tela de login
-                Navigator.pushReplacementNamed(context, '/login');
+                Navigator.pushReplacementNamed(
+                  context,
+                  '/login',
+                  arguments: widget.currentUser,
+                );
+              } else if (value == 'perfil') {
+                // Navega para tela de login
+                Navigator.pushReplacementNamed(
+                  context,
+                  '/profile',
+                  arguments: widget.currentUser,
+                );
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'logout', child: Text('Sair')),
               const PopupMenuItem(
                 value: 'newUser',
                 child: Text('Novo Usuário'),
               ),
+              const PopupMenuItem(value: 'perfil', child: Text('Perfil')),
+              const PopupMenuItem(value: 'logout', child: Text('Sair')),
             ],
           ),
         ],
@@ -232,88 +286,4 @@ class _FeedPageState extends State<FeedPage> {
       ),
     );
   }
-
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(
-  //       title: const Text('Feed'),
-  //       bottom: PreferredSize(
-  //         preferredSize: const Size.fromHeight(70),
-  //         child: Padding(
-  //           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-  //           child: TextField(
-  //             decoration: InputDecoration(
-  //               hintText: 'Pesquisar pets ou frases...',
-  //               prefixIcon: const Icon(Icons.search),
-  //               filled: true,
-  //               fillColor: Colors.white,
-  //               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-  //               border: OutlineInputBorder(
-  //                 borderRadius: BorderRadius.circular(30),
-  //                 borderSide: BorderSide.none,
-  //               ),
-  //             ),
-  //             onChanged: (value) {
-  //               setState(() {
-  //                 filtro = value.toLowerCase();
-  //               });
-  //             },
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //     body: FutureBuilder(
-  //       future: futurePosts,
-  //       builder: (context, snapshot) {
-  //         if (!snapshot.hasData) {
-  //           return const Center(child: CircularProgressIndicator());
-  //         }
-  //         final traducoes = snapshot.data!;
-  //         final filtradas = traducoes.where((item) {
-  //           final texto = '${item.pet_name} ${item.text}'.toLowerCase();
-  //           return texto.contains(filtro);
-  //         }).toList();
-  //         return ListView.builder(
-  //           itemCount: filtradas.length,
-  //           itemBuilder: (_, i) {
-  //             final post = filtradas[i];
-  //             return PostCard(
-  //               key: ValueKey(post.id),
-  //               post: post,
-  //               currentUser: widget.currentUser,
-  //               onToggleLike: () => _toggleLikeFor(post),
-  //             );
-  //           },
-  //         );
-  //         // return ListView.builder(
-  //         //   itemCount: filtradas.length,
-  //         //   itemBuilder: (context, index) {
-  //         //     final item = filtradas[index];
-  //         //     return Card(
-  //         //       margin: const EdgeInsets.all(10),
-  //         //       child: ListTile(
-  //         //         leading: const Icon(Icons.pets, color: Colors.orange),
-  //         //         title: Text('${item['animal_nome']}: ${item['frase']}'),
-  //         //         subtitle: Text(item['data']),
-  //         //       ),
-  //         //     );
-  //         //   },
-  //         // );
-  //       },
-  //     ),
-  //     bottomNavigationBar: BottomNavigationBar(
-  //       currentIndex: _selectedIndex,
-  //       onTap: _onItemTapped,
-  //       selectedItemColor: Colors.orange,
-  //       items: const [
-  //         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Feed'),
-  //         BottomNavigationBarItem(
-  //           icon: Icon(Icons.mic),
-  //           label: 'Nova Tradução',
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 }

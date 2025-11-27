@@ -39,6 +39,7 @@ dependencies:
   audioplayers: ^6.0.0
   firebase_core: ^3.3.0
   cloud_firestore: ^5.6.12
+  firebase_storage: ^12.4.10
 
 dependency_overrides:
   record_linux: ^1.2.1

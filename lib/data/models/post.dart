@@ -1,6 +1,7 @@
 class Post {
   final String id;
   final String userId;
+  final String petId;
   final String text; // tradução engraçada
   final String pet_name; // nome animal
   final String
@@ -14,6 +15,7 @@ class Post {
   Post({
     required this.id,
     required this.userId,
+    required this.petId,
     required this.text,
     required this.pet_name,
     required this.image,

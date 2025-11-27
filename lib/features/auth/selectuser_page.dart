@@ -36,6 +36,11 @@ class _UserSelectionPageState extends State<UserSelectionPage> {
     }
   }
 
+  void _goToNewUser(List<User> users) {
+    //final user = users.firstWhere((u) => u.id == selectedUserId);
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,10 +80,23 @@ class _UserSelectionPageState extends State<UserSelectionPage> {
                     });
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 ElevatedButton(
                   onPressed: () => _goToFeed(users),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 52),
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                  ),
                   child: const Text('Entrar'),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => _goToNewUser(users),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 52),
+                  ),
+                  child: const Text('Novo Usuário'),
                 ),
               ],
             ),

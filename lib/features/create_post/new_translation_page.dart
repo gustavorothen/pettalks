@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -28,12 +30,6 @@ class _NewTranslationPageState extends State<NewTranslationPage> {
     _loadPet();
   }
 
-  // Future<void> _loadPet() async {
-  //   final pet = await DatabaseHelper.getPetById(widget.currentUser.pet_id);
-  //   setState(() {
-  //     petData = pet;
-  //   });
-  // }
   Future<void> _loadPet() async {
     try {
       final petDoc = await FirebaseFirestore.instance
@@ -79,7 +75,12 @@ class _NewTranslationPageState extends State<NewTranslationPage> {
 
   Future<String> _getAudioPath() async {
     final dir = await getApplicationDocumentsDirectory();
-    return "${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a";
+    return "${dir.path}/audio__${widget.currentUser.pet_id}${DateTime.now().millisecondsSinceEpoch}.m4a";
+  }
+
+  Future<String> convertAudioToBase64(String audioPath) async {
+    final bytes = await File(audioPath).readAsBytes();
+    return base64Encode(bytes);
   }
 
   Future startRecording() async {
@@ -113,30 +114,42 @@ class _NewTranslationPageState extends State<NewTranslationPage> {
       return;
     }
 
-    // monta o objeto post
-    final newPost = {
-      'text': textCtrl.text,
-      'date': DateTime.now().toIso8601String(),
-      'isLiked': 0,
-      'likes': 0,
-      'audio_url': recordedPath,
-      'pet_id': widget
-          .currentUser
-          .pet_id, // exemplo: vincular ao pet 1 (ajuste conforme seu app)
-    };
-
-    // salva no banco
     await FirebaseFirestore.instance.collection('post').add({
       'text': textCtrl.text,
       'date': DateTime.now().toIso8601String(),
       'isLiked': false,
       'likes': 0,
-      'audio_url': recordedPath,
-      'pet_id': widget.currentUser.pet_id, // id do documento do pet
+      'audio_base64': await convertAudioToBase64(recordedPath!),
+      'pet_id': widget.currentUser.pet_id,
     });
 
-    // volta para a tela anterior avisando que deu certo
-    Navigator.pop(context, newPost);
+    Navigator.pop(context, true); // ✅ apenas sinaliza sucesso
+  }
+
+  ImageProvider _buildPetImage(Map<String, dynamic>? petData) {
+    if (petData == null) {
+      return const AssetImage('assets/dog1.jpg');
+    }
+
+    final photo = petData['photo'];
+
+    // ✅ Se for Base64
+    if (photo != null && photo.toString().startsWith('/9j') ||
+        photo.toString().contains('base64')) {
+      try {
+        return MemoryImage(base64Decode(photo));
+      } catch (_) {
+        return const AssetImage('assets/dog1.jpg');
+      }
+    }
+
+    // ✅ Se for um asset salvo no Firestore (ex: 'assets/dog2.jpg')
+    if (photo.toString().startsWith('assets/')) {
+      return AssetImage(photo);
+    }
+
+    // ✅ fallback final
+    return const AssetImage('assets/dog1.jpg');
   }
 
   @override
@@ -159,9 +172,7 @@ class _NewTranslationPageState extends State<NewTranslationPage> {
               children: [
                 CircleAvatar(
                   radius: 45,
-                  backgroundImage: petData != null
-                      ? AssetImage(petData!['photo'])
-                      : const AssetImage('assets/dog1.jpg'),
+                  backgroundImage: _buildPetImage(petData),
                 ),
                 const SizedBox(width: 12),
                 Column(

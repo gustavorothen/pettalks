@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:pettalks/features/profile/edit_profile_page.dart';
 import 'features/auth/login_page.dart';
 import 'features/auth/selectuser_page.dart';
 import 'features/feed/feed_page.dart';
@@ -38,7 +39,16 @@ class PetTalksApp extends StatelessWidget {
         },
         '/explore': (_) => const ExplorePage(),
         '/messages': (_) => const ChatListPage(),
-        '/profile': (_) => const ProfilePage(),
+        '/profile': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments;
+          final user = args is User ? args : defaultUser;
+          return ProfilePage(currentUser: user);
+        },
+        '/editprofile': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments;
+          final user = args is User ? args : defaultUser;
+          return EditProfilePage(currentUser: user);
+        },
       },
     );
   }

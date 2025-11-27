@@ -4,6 +4,7 @@ final mockPosts = [
   Post(
     id: 'post1',
     userId: '1',
+    petId: '1',
     text: 'Eu sou o dono do sofá agora.',
     pet_name: 'Buddy.',
     image: 'assets/dog1.jpg',
@@ -13,6 +14,7 @@ final mockPosts = [
   Post(
     id: 'post2',
     userId: '2',
+    petId: '2',
     text: 'Você me serve. Não se esqueça disso.',
     pet_name: 'Lucky.',
     image: 'assets/cat1.jpg',

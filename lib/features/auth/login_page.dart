@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../data/models/pet.dart';
 import '../../data/models/user.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:convert';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,16 +20,49 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController speciesController = TextEditingController();
 
   XFile? petImage;
-
+  String base64Image = '';
   Future pickPetPhoto() async {
     final picker = ImagePicker();
     final photo = await picker.pickImage(source: ImageSource.gallery);
+
     if (photo != null) {
+      final bytes = await File(photo.path).readAsBytes();
+      final base64 = base64Encode(bytes);
+
       setState(() {
         petImage = photo;
+        base64Image = base64; // ✅ agora atualiza imediatamente
       });
     }
   }
+
+  // Future<String> convertImageToBase64(XFile image) async {
+  //   final bytes = await File(image.path).readAsBytes();
+  //   return base64Encode(bytes);
+  // }
+
+  Future<String> saveImagePermanently(XFile image) async {
+    final directory = await getApplicationDocumentsDirectory();
+
+    final String newPath =
+        "${directory.path}/pet_${DateTime.now().millisecondsSinceEpoch}.jpg";
+
+    final File newImage = await File(image.path).copy(newPath);
+
+    return newImage.path; // ✅ caminho permanente
+  }
+
+  /// ✅ Envia a foto para o Firebase Storage e retorna a URL pública
+  // Future<String> uploadPetPhoto(File file) async {
+  //   final storageRef = FirebaseStorage.instance.ref();
+  //   final fileRef = storageRef.child(
+  //     "pets/${DateTime.now().millisecondsSinceEpoch}.jpg",
+  //   );
+
+  //   await fileRef.putFile(file);
+
+  //   return await fileRef.getDownloadURL();
+  // }
 
   void continueToApp() async {
     if (ownerController.text.isEmpty ||
@@ -43,15 +78,18 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final db = FirebaseFirestore.instance;
 
-      // 1. Cria o pet
+      // ✅ 1. Faz upload da foto e pega a URL
+      //final photoUrl = await uploadPetPhoto(File(petImage!.path));
+      //base64Image = await convertImageToBase64(petImage!);
+
+      // ✅ 2. Cria o pet com a URL da foto
       final petDoc = await db.collection('pet').add({
         'name': petController.text,
         'species': speciesController.text,
-        'photo': petImage!
-            .path, // aqui você pode salvar o path local ou usar Storage
+        'photo': base64Image, // ✅ agora salva a URL do Storage
       });
 
-      // 2. Cria o usuário vinculado ao pet
+      // ✅ 3. Cria o usuário vinculado ao pet
       final userDoc = await db.collection('user').add({
         'name': ownerController.text,
         'pet_id': petDoc.id,
@@ -59,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
         'following': 0,
       });
 
-      // 3. Cria objeto User para passar ao Feed
+      // ✅ 4. Cria objeto User para passar ao Feed
       final user = User(
         id: userDoc.id,
         name: ownerController.text,
@@ -91,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
               child: CircleAvatar(
                 radius: 50,
                 backgroundImage: petImage != null
-                    ? FileImage(File(petImage!.path))
+                    ? MemoryImage(base64Decode(base64Image))
                     : null,
                 child: petImage == null
                     ? const Icon(Icons.camera_alt, size: 40)
