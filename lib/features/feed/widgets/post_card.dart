@@ -152,7 +152,7 @@ class PostCard extends StatelessWidget {
                     ),
 
                     // ✅ Botão de áudio (Base64)
-                    if (post.audioUrl != null && user.pet_id == post.petId)
+                    if (post.audioUrl != null)
                       IconButton(
                         onPressed: () async {
                           try {

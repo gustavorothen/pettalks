@@ -23,7 +23,9 @@ class _FeedPageState extends State<FeedPage> {
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      // já está na tela Feed
+      setState(() {
+        futurePosts = _loadPosts();
+      });
     } else if (index == 1) {
       goToNewTranslation();
     }
@@ -89,15 +91,12 @@ class _FeedPageState extends State<FeedPage> {
           }
         }
 
-        // ✅ Garantir que likedBy é lista
         final likedBy = (data['likedBy'] is List)
             ? List<String>.from(data['likedBy'])
             : <String>[];
 
-        // ✅ Garantir que likesCount é número
         final likesCount = (data['likesCount'] is int) ? data['likesCount'] : 0;
 
-        // ✅ Garantir que a data é válida
         DateTime date;
         try {
           date = DateTime.parse(data['date']);
@@ -105,7 +104,6 @@ class _FeedPageState extends State<FeedPage> {
           date = DateTime.now();
         }
 
-        // ✅ Criar o Post sem risco de erro
         posts.add(
           Post(
             id: doc.id,
@@ -125,7 +123,7 @@ class _FeedPageState extends State<FeedPage> {
       return posts;
     } catch (e) {
       print("Erro geral ao carregar posts: $e");
-      return []; // ✅ Nunca deixa o FutureBuilder travar
+      return [];
     }
   }
 
