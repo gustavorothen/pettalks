@@ -20,44 +20,44 @@ class PostCard extends StatelessWidget {
     required this.onToggleLike,
   });
 
-  void _openComments(BuildContext context) {
-    final commentCtrl = TextEditingController();
-    showModalBottomSheet(
-      context: context,
-      builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Comentários (mock)",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: commentCtrl,
-                decoration: const InputDecoration(
-                  hintText: "Escreva um comentário...",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Comentário enviado (mock)!")),
-                  );
-                },
-                child: const Text("Enviar"),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  // void _openComments(BuildContext context) {
+  //   final commentCtrl = TextEditingController();
+  //   showModalBottomSheet(
+  //     context: context,
+  //     builder: (_) {
+  //       return Padding(
+  //         padding: const EdgeInsets.all(16),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             const Text(
+  //               "Comentários (mock)",
+  //               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  //             ),
+  //             const SizedBox(height: 12),
+  //             TextField(
+  //               controller: commentCtrl,
+  //               decoration: const InputDecoration(
+  //                 hintText: "Escreva um comentário...",
+  //                 border: OutlineInputBorder(),
+  //               ),
+  //             ),
+  //             const SizedBox(height: 12),
+  //             ElevatedButton(
+  //               onPressed: () {
+  //                 Navigator.pop(context);
+  //                 ScaffoldMessenger.of(context).showSnackBar(
+  //                   const SnackBar(content: Text("Comentário enviado (mock)!")),
+  //                 );
+  //               },
+  //               child: const Text("Enviar"),
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   /// ✅ Converte Base64 em arquivo temporário para tocar
   Future<String> _createTempAudioFile(String base64Audio, String postId) async {
