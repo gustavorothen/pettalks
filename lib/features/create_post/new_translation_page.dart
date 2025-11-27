@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ class _NewTranslationPageState extends State<NewTranslationPage> {
   final _record = AudioRecorder();
   bool isRecording = false;
   String? recordedPath;
+  Timer? _recordTimer;
   final textCtrl = TextEditingController();
   Map<String, dynamic>? petData;
 
@@ -92,10 +94,26 @@ class _NewTranslationPageState extends State<NewTranslationPage> {
         isRecording = true;
         recordedPath = path;
       });
+
+      // Auto stop after 5 seconds
+      _recordTimer?.cancel();
+      _recordTimer = Timer(const Duration(seconds: 5), () async {
+        if (isRecording) {
+          await stopRecording();
+          // Inform the user recording was stopped due to time limit
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gravação finalizada (5 segundos).')),
+          );
+        }
+      });
     }
   }
 
   Future stopRecording() async {
+    // Cancel timer if user stopped the recording early
+    _recordTimer?.cancel();
+    _recordTimer = null;
+
     await _record.stop();
 
     setState(() {

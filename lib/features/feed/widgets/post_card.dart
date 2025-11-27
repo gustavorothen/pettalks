@@ -137,24 +137,9 @@ class PostCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                // Text(
-                //   post.pet_name,
-                //   style: const TextStyle(
-                //     fontSize: 16,
-                //     fontWeight: FontWeight.bold,
-                //   ),
-                // ),
-                // Text(
-                //   DateFormat('dd/MM/yyyy HH:mm').format(post.date),
-                //   style: TextStyle(fontSize: 14, color: Colors.grey),
-                // ),
+                
                 const SizedBox(height: 4),
                 Text(post.text, style: const TextStyle(fontSize: 14)),
-                // SizedBox(height: 4),
-                // Text(
-                //   DateFormat('dd/MM/yyyy HH:mm').format(post.date),
-                //   style: TextStyle(fontSize: 14, color: Colors.grey),
-                // ),
                 const SizedBox(height: 8),
 
                 // ✅ Ícones sem overflow

@@ -127,14 +127,6 @@ class _FeedPageState extends State<FeedPage> {
     }
   }
 
-  // Future<void> goToNewTranslation() async {
-  //   await Navigator.pushNamed(context, '/new');
-
-  //   setState(() {
-  //     futurePosts = _loadPosts(); // recarrega lista
-  //   });
-  // }
-
   Future<void> goToNewTranslation() async {
     final result = await Navigator.push(
       context,
@@ -150,17 +142,7 @@ class _FeedPageState extends State<FeedPage> {
     }
   }
 
-  // void _toggleLikeFor(Post post) async {
-  //   setState(() {
-  //     post.isLiked = !post.isLiked;
-  //     post.likes += post.isLiked ? 1 : -1;
-  //   });
 
-  //   await FirebaseFirestore.instance.collection('post').doc(post.id).update({
-  //     'isLiked': post.isLiked,
-  //     'likes': post.likes,
-  //   });
-  // }
   void _toggleLikeFor(Post post) async {
     final postRef = FirebaseFirestore.instance.collection('post').doc(post.id);
 
