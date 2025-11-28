@@ -137,7 +137,7 @@ class PostCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 4),
                 Text(post.text, style: const TextStyle(fontSize: 14)),
                 const SizedBox(height: 8),
@@ -157,10 +157,10 @@ class PostCard extends StatelessWidget {
                     ),
                     Text('${post.likes}'),
 
-                    IconButton(
-                      onPressed: () => _openComments(context),
-                      icon: const Icon(Icons.chat_bubble_outline, size: 22),
-                    ),
+                    // IconButton(
+                    //   onPressed: () => _openComments(context),
+                    //   icon: const Icon(Icons.chat_bubble_outline, size: 22),
+                    // ),
 
                     // ✅ Botão de áudio (Base64)
                     if (post.audioUrl != null)
