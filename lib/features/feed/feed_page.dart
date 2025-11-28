@@ -52,14 +52,14 @@ class _FeedPageState extends State<FeedPage> {
       for (var doc in snapshot.docs) {
         final data = doc.data();
 
-        // ✅ Garantir que pet_id é string
+        // Garantir que pet_id é string
         final petId = data['pet_id']?.toString() ?? '';
 
         String petName = '';
         String petPhoto = '';
         String ownerUserId = '';
 
-        // ✅ Buscar PET com proteção total
+        // Buscar PET com proteção total
         if (petId.isNotEmpty) {
           try {
             final petDoc = await FirebaseFirestore.instance
@@ -75,7 +75,7 @@ class _FeedPageState extends State<FeedPage> {
             print("Erro ao buscar pet: $e");
           }
 
-          // ✅ Buscar USER dono do pet com proteção total
+          // Buscar USER dono do pet com proteção total
           try {
             final userQuery = await FirebaseFirestore.instance
                 .collection('user')
